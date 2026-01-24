@@ -1,0 +1,36 @@
+# 这个防止git add.的时候一下子不小心上传太多 也可以先status看一哈有哪些
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+venv/
+env/
+mediapipe_env/
+
+# PyCharm缓存
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# 日志/临时文件
+*.log
+tmp/
