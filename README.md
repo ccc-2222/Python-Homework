@@ -1,7 +1,7 @@
 # 手势音乐播放器项目结构
 > gesture_music_player/ # 项目根目录
 
-> requirements.txt # 依赖清单（统一开发环境）
+> myenvs.txt # 依赖清单（统一开发环境）
 
 > main.py # 项目入口：启动 Flask+WebSocket + 手势识别
 
