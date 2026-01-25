@@ -45,4 +45,8 @@
             
         music/ # 测试音乐存放目录
 
-> 💡 本项目基于 **Flask + WebSocket + MediaPipe + Pygame** 实现手势控制音乐播放。
+>  本项目基于 **Flask + WebSocket + MediaPipe + Pygame** 实现手势控制音乐播放。
+
+朱春雯:设计前端界面
+胡皓宇:实现音乐播放
+曹乐:实现mediapipe手势识别，并转为播放器指令
