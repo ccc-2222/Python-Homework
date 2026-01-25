@@ -1,7 +1,6 @@
-# 这是我的版本 如有报错可能是兼容的问题
-python==3.9.23
+# 这是我的版本 如有报错可能是兼容的问题  python用3.9.13版本
 mediapipe==0.10.21
-opencv-python==4.11.0
+opencv-python==4.11.0.86
 numpy==1.26.4
 websockets==12.0
 flask==2.3.3
