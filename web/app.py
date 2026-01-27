@@ -1,7 +1,7 @@
 """
 Flask前端服务
 """
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, jsonify
 import os
 
 app = Flask(__name__,
@@ -13,14 +13,29 @@ app = Flask(__name__,
 @app.route("/")
 def index():
     # 读取音乐列表（传给前端显示）
-    music_list = [f for f in os.listdir(os.path.join("static", "music")) if f.endswith(".mp3")]
+    music_dir = os.path.join(os.path.dirname(__file__), "..", "music")
+    if not os.path.exists(music_dir):
+        music_list = []
+    else:
+        music_list = [f for f in os.listdir(music_dir) if f.endswith((".mp3", ".ogg", ".wav"))]
     return render_template("index.html", music_list=music_list)
+
+
+# 路由：获取音乐列表JSON（供前端AJAX调用）
+@app.route("/music-list")
+def get_music_list():
+    music_dir = os.path.join(os.path.dirname(__file__), "..", "music")
+    if not os.path.exists(music_dir):
+        return jsonify({"music_list": []})
+    music_list = [f for f in os.listdir(music_dir) if f.endswith((".mp3", ".ogg", ".wav"))]
+    return jsonify({"music_list": music_list})
 
 
 # 路由：提供音乐文件（前端播放用）
 @app.route("/music/<filename>")
 def get_music(filename):
-    return send_from_directory(os.path.join("static", "music"), filename)
+    music_dir = os.path.join(os.path.dirname(__file__), "..", "music")
+    return send_from_directory(music_dir, filename)
 
 
 def run_flask_app():
