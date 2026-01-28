@@ -57,9 +57,12 @@ class GestureDetector:
             results = self.hands.process(img_rgb)
             
             # 自动重置指令为idle（脉冲复位逻辑）
-            if self.current_command['command'] != 'idle' and (time.time() - self.last_trigger_time > 0.2):
-                self.current_command['command'] = 'idle'
-                self.current_command['confidence'] = 0.0
+            # 只有当置信度不为1.0（非人工/Web端指令）时，才由此处重置
+            # Web端指令由WebSocket Server自行管理复位
+            if self.current_command['confidence'] != 1.0:
+                if self.current_command['command'] != 'idle' and (time.time() - self.last_trigger_time > 0.2):
+                    self.current_command['command'] = 'idle'
+                    self.current_command['confidence'] = 0.0
 
             # 当前帧检测到的原始手势
             current_raw_cmd = None
