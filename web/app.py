@@ -1,32 +1,31 @@
 """
-Flask前端服务
+Flask前端服务：适配根目录music文件夹
 """
 from flask import Flask, render_template, send_from_directory
 import os
 
-app = Flask(__name__,
-            template_folder="static",
-            static_folder="static")
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+app = Flask(
+    __name__,
+    template_folder=os.path.join(BASE_DIR, "web", "static"),
+    static_folder=os.path.join(BASE_DIR, "web", "static")
+)
 
-
-# 路由：首页（播放器界面）
+# 首页路由：读取根目录music的音乐列表
 @app.route("/")
 def index():
-    # 读取音乐列表（传给前端显示）
-    music_list = [f for f in os.listdir(os.path.join("static", "music")) if f.endswith(".mp3")]
+    music_dir = os.path.join(BASE_DIR, "music")
+    music_list = [f for f in os.listdir(music_dir) if f.endswith(".mp3")]
     return render_template("index.html", music_list=music_list)
 
-
-# 路由：提供音乐文件（前端播放用）
+# 音乐文件路由：提供根目录music的音频
 @app.route("/music/<filename>")
 def get_music(filename):
-    return send_from_directory(os.path.join("static", "music"), filename)
-
+    music_dir = os.path.join(BASE_DIR, "music")
+    return send_from_directory(music_dir, filename)
 
 def run_flask_app():
-    """供main.py调用的启动函数"""
-    app.run(host="127.0.0.1", port=5000, debug=True)  # debug模式方便开发
-
+    app.run(host="127.0.0.1", port=5000, debug=False)
 
 if __name__ == "__main__":
     run_flask_app()
