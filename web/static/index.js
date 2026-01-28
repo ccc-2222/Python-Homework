@@ -4,6 +4,7 @@ class GestureMusicPlayer {
     constructor() {
         this.ws = null;
         this.musicList = [];
+        this.lastGestureData = { command: null, confidence: null }; // 添加状态变量
         this.init();
     }
 
@@ -30,11 +31,45 @@ class GestureMusicPlayer {
             this.ws.onmessage = (event) => {
                 try {
                     const data = JSON.parse(event.data);
-                    currentCommand.textContent = data.command || 'idle';
-                    confidence.textContent = data.confidence ? data.confidence.toFixed(2) : '0.0';
 
-                    // 根据指令更新按钮状态
-                    this.updateButtonStates(data.command);
+                    // 检查是否需要更新
+                    if (
+                        data.command !== this.lastGestureData.command ||
+                        data.confidence !== this.lastGestureData.confidence
+                    ) {
+                        if (data.command === 'idle') {
+                            // 延迟 1 秒更新指令
+                            setTimeout(() => {
+                                // 再次检查是否仍然是 idle
+                                if (this.lastGestureData.command === 'idle') {
+                                    currentCommand.textContent = 'idle';
+                                    confidence.textContent = data.confidence
+                                        ? data.confidence.toFixed(2)
+                                        : '0.0';
+
+                                    // 更新状态
+                                    this.lastGestureData = {
+                                        command: data.command,
+                                        confidence: data.confidence,
+                                    };
+                                }
+                            }, 1000);
+                        } else {
+                            currentCommand.textContent = data.command || 'idle';
+                            confidence.textContent = data.confidence
+                                ? data.confidence.toFixed(2)
+                                : '0.0';
+
+                            // 更新状态
+                            this.lastGestureData = {
+                                command: data.command,
+                                confidence: data.confidence,
+                            };
+
+                            // 根据指令更新按钮状态
+                            this.updateButtonStates(data.command);
+                        }
+                    }
                 } catch (e) {
                     console.error('解析WebSocket消息失败:', e);
                 }
@@ -56,7 +91,6 @@ class GestureMusicPlayer {
                 wsStatus.textContent = '连接错误';
                 wsStatus.className = 'status disconnected';
             };
-
         } catch (e) {
             console.error('创建WebSocket连接失败:', e);
             wsStatus.textContent = '连接失败';
@@ -67,12 +101,12 @@ class GestureMusicPlayer {
     loadMusicList() {
         // 从服务器获取音乐列表
         fetch('/music-list')
-            .then(response => response.json())
-            .then(data => {
+            .then((response) => response.json())
+            .then((data) => {
                 this.musicList = data.music_list || [];
                 this.renderMusicList();
             })
-            .catch(error => {
+            .catch((error) => {
                 console.error('加载音乐列表失败:', error);
                 // 如果获取失败, 显示空列表
                 this.renderMusicList();
@@ -101,11 +135,13 @@ class GestureMusicPlayer {
         // 这里可以添加播放逻辑, 但实际播放由后端控制
         console.log('选择播放:', this.musicList[index]);
         // 移除之前的播放状态
-        document.querySelectorAll('.music-list li').forEach(li => {
+        document.querySelectorAll('.music-list li').forEach((li) => {
             li.classList.remove('playing');
         });
         // 添加当前播放状态
-        const selectedLi = document.querySelector(`.music-list li[data-index="${index}"]`);
+        const selectedLi = document.querySelector(
+            `.music-list li[data-index="${index}"]`
+        );
         if (selectedLi) {
             selectedLi.classList.add('playing');
         }
@@ -114,12 +150,12 @@ class GestureMusicPlayer {
     updateButtonStates(command) {
         // 根据当前指令更新按钮视觉状态
         const buttons = document.querySelectorAll('.btn');
-        buttons.forEach(btn => {
+        buttons.forEach((btn) => {
             btn.classList.remove('active');
         });
 
         // 根据指令高亮对应按钮
-        switch(command) {
+        switch (command) {
             case 'play':
                 document.getElementById('play-btn').classList.add('active');
                 break;
@@ -143,12 +179,24 @@ class GestureMusicPlayer {
 
     bindEvents() {
         // 绑定按钮点击事件(可选, 用于手动测试)
-        document.getElementById('play-btn').addEventListener('click', () => this.sendCommand('play'));
-        document.getElementById('pause-btn').addEventListener('click', () => this.sendCommand('pause'));
-        document.getElementById('next-btn').addEventListener('click', () => this.sendCommand('next'));
-        document.getElementById('prev-btn').addEventListener('click', () => this.sendCommand('prev'));
-        document.getElementById('vol-up-btn').addEventListener('click', () => this.sendCommand('volume_up'));
-        document.getElementById('vol-down-btn').addEventListener('click', () => this.sendCommand('volume_down'));
+        document
+            .getElementById('play-btn')
+            .addEventListener('click', () => this.sendCommand('play'));
+        document
+            .getElementById('pause-btn')
+            .addEventListener('click', () => this.sendCommand('pause'));
+        document
+            .getElementById('next-btn')
+            .addEventListener('click', () => this.sendCommand('next'));
+        document
+            .getElementById('prev-btn')
+            .addEventListener('click', () => this.sendCommand('prev'));
+        document
+            .getElementById('vol-up-btn')
+            .addEventListener('click', () => this.sendCommand('volume_up'));
+        document
+            .getElementById('vol-down-btn')
+            .addEventListener('click', () => this.sendCommand('volume_down'));
     }
 
     sendCommand(command) {
