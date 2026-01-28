@@ -1,7 +1,7 @@
 """
 Flask前端服务：适配根目录music文件夹
 """
-from flask import Flask, render_template, send_from_directory
+from flask import Flask, render_template, send_from_directory, jsonify
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
