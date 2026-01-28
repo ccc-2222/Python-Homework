@@ -74,8 +74,8 @@ class GestureDetector:
             # ---------------------- 防抖逻辑 ----------------------
             # 如果当前检测到的原始指令与“潜在指令”一致
             if current_raw_cmd == self.potential_command:
-                # 检查保持时间是否超过阈值 (0.3秒)
-                if (time.time() - self.stable_start_time) > 0.3:
+                # 检查保持时间是否超过阈值 (0.5秒)
+                if (time.time() - self.stable_start_time) > 0.5:
                     # 只有当这是新指令（不同于上次触发的）时才触发
                     if current_raw_cmd != self.last_triggered_cmd:
                         # 1. 如果是有效指令，则触发
