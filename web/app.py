@@ -24,6 +24,16 @@ def get_music(filename):
     music_dir = os.path.join(BASE_DIR, "music")
     return send_from_directory(music_dir, filename)
 
+# 音乐列表路由：返回JSON格式的音乐列表
+@app.route("/music-list")
+def music_list():
+    music_dir = os.path.join(BASE_DIR, "music")
+    if not os.path.exists(music_dir):
+        return jsonify({"music_list": []})
+
+    music_list = [f for f in os.listdir(music_dir) if f.endswith(".mp3")]
+    return jsonify({"music_list": music_list})
+
 def run_flask_app():
     app.run(host="127.0.0.1", port=5000, debug=False)
 
