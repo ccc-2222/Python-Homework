@@ -15,7 +15,10 @@ class WebSocketServer:
         """持续发送当前状态给前端"""
         while True:
             try:
-                await websocket.send(json.dumps(self.current_command))
+                # 添加当前播放音乐信息
+                state = self.current_command.copy()
+                state['current_music'] = self.current_command.get('current_music', None)
+                await websocket.send(json.dumps(state))
                 await asyncio.sleep(0.2)  # 提高刷新率到0.2秒
             except websockets.exceptions.ConnectionClosed:
                 break

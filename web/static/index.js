@@ -70,6 +70,10 @@ class GestureMusicPlayer {
                             this.updateButtonStates(data.command);
                         }
                     }
+
+                    if (data.current_music) {
+                        this.updatePlayingMusic(data.current_music);
+                    }
                 } catch (e) {
                     console.error('解析WebSocket消息失败:', e);
                 }
@@ -118,14 +122,16 @@ class GestureMusicPlayer {
         musicListElement.innerHTML = '';
 
         if (this.musicList.length === 0) {
-            musicListElement.innerHTML = '<li>暂无音乐文件</li>';
+            musicListElement.innerHTML = '<li class="music-item">暂无音乐文件</li>';
             return;
         }
 
         this.musicList.forEach((music, index) => {
             const li = document.createElement('li');
             li.textContent = music;
+            li.className = 'music-item'; // 添加样式类
             li.dataset.index = index;
+            li.dataset.music = music;   // 添加音乐名称数据属性
             li.addEventListener('click', () => this.playMusic(index));
             musicListElement.appendChild(li);
         });
@@ -174,6 +180,19 @@ class GestureMusicPlayer {
             case 'volume_down':
                 document.getElementById('vol-down-btn').classList.add('active');
                 break;
+        }
+    }
+
+    updatePlayingMusic(currentMusic) {
+        // 清除之前的播放状态
+        document.querySelectorAll('.music-item').forEach((item) => {
+            item.classList.remove('playing');
+        });
+
+        // 为当前播放的音乐添加播放状态
+        const playingItem = document.querySelector(`.music-item[data-music='${currentMusic}']`);
+        if (playingItem) {
+            playingItem.classList.add('playing');
         }
     }
 

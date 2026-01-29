@@ -46,7 +46,10 @@ class MusicPlayer:
             pygame.mixer.music.load(self.music_list[self.current_index])
             pygame.mixer.music.play()
             self.is_playing = True
-            print(f"🎵 播放：{os.path.basename(self.music_list[self.current_index])}")
+            current_song = os.path.basename(self.music_list[self.current_index])
+            # 更新共享状态中的当前音乐
+            self.shared_command['current_music'] = current_song
+            print(f"🎵 播放：{current_song}")
         except Exception as e:
             print(f"播放失败：{e}")
             self.is_playing = False
@@ -56,12 +59,16 @@ class MusicPlayer:
             return
         self.current_index = (self.current_index + 1) % len(self.music_list)
         self._play_current_music()
+        # 更新当前播放音乐的全局状态
+        self.shared_command['current_music'] = self.get_current_music()
 
     def _prev_music(self):
         if len(self.music_list) <= 1:
             return
         self.current_index = (self.current_index - 1) % len(self.music_list)
         self._play_current_music()
+        # 更新当前播放音乐的全局状态
+        self.shared_command['current_music'] = self.get_current_music()
 
     def _adjust_volume(self, direction: str):
         if direction == "up":
@@ -70,6 +77,12 @@ class MusicPlayer:
             self.volume = max(0.0, self.volume - 0.1)
         pygame.mixer.music.set_volume(self.volume)
         print(f"🔊 音量：{round(self.volume, 1)}")
+
+    def get_current_music(self):
+        """获取当前播放的音乐名称"""
+        if self.music_list and self.is_playing:
+            return os.path.basename(self.music_list[self.current_index])
+        return None
 
     def listen_command(self):
         print("🎶 音乐播放器就绪，等待手势指令...")

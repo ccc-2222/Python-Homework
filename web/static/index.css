@@ -201,6 +201,14 @@ h2 {
     font-weight: bold;
 }
 
+/* 标记当前播放的音乐 */
+.playing {
+    color: green;
+    font-weight: bold;
+    background-color: green;
+    color: white; /* 确保文字颜色可读 */
+}
+
 /* 响应式设计 */
 @media (max-width: 600px) {
     .container {
