@@ -26,12 +26,6 @@ h1 {
     text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
-h2 {
-    color: white;
-    margin-bottom: 15px;
-    font-size: 1.5em;
-}
-
 /* 状态区域 */
 .status-section {
     background: rgba(255, 255, 255, 0.1);
@@ -207,6 +201,31 @@ h2 {
     font-weight: bold;
     background-color: green;
     color: white; /* 确保文字颜色可读 */
+}
+
+/* 视频显示区域 */
+.video-section {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: center;
+}
+
+.video-container {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.video-container img {
+    width: 100%;
+    display: block;
 }
 
 /* 响应式设计 */

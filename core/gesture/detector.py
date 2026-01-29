@@ -1,4 +1,3 @@
-
 """
 手势检测核心（实现Mediapipe摄像头检测+手势转指令）
 """
@@ -6,6 +5,7 @@ import cv2
 import mediapipe as mp
 import time
 from core.gesture.signal import convert_gesture_to_command  # 手势转指令
+from core.utils.shared_frame import frame_buffer # 引入共享帧缓冲区
 
 
 class GestureDetector:
@@ -103,7 +103,12 @@ class GestureDetector:
             if self.display_command != "None":
                  cv2.putText(img, f"CMD: {self.display_command}", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
             
-            cv2.imshow('Gesture Control', img)
+            # 将当前帧编码为 JPEG 并更新到共享缓冲区
+            ret, buffer = cv2.imencode('.jpg', img)
+            if ret:
+                frame_buffer.update(buffer.tobytes())
+
+            # cv2.imshow('Gesture Control', img) # 移除本地显示
             if cv2.waitKey(5) & 0xFF == ord('q'):
                 break
                 
