@@ -28,6 +28,9 @@ class GestureDetector:
         
         # 冷却控制
         self.last_trigger_time = 0
+        # 新增：音量手势专属冷却（控制连续触发间隔）
+        self.last_volume_trigger = 0
+        self.volume_interval = 0.2  # 音量连续触发间隔（200ms）
         
         # 状态防抖相关
         self.potential_command = None    # 当前正在检测但未确认的指令
@@ -63,8 +66,6 @@ class GestureDetector:
             results = self.hands.process(img_rgb)
             
             # 自动重置指令为idle（脉冲复位逻辑）
-            # 只有当置信度不为1.0（非人工/Web端指令）时，才由此处重置
-            # Web端指令由WebSocket Server自行管理复位
             if self.current_command['confidence'] != 1.0:
                 if self.current_command['command'] != 'idle' and (time.time() - self.last_trigger_time > 0.2):
                     self.current_command['command'] = 'idle'
@@ -80,41 +81,49 @@ class GestureDetector:
                     self.mp_draw.draw_landmarks(img, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
                     current_raw_cmd, current_conf, current_fingers = convert_gesture_to_command(hand_landmarks)
             
-            # ---------------------- 防抖逻辑 ----------------------
-            # 如果当前检测到的原始指令与“潜在指令”一致
+            # ---------------------- 防抖逻辑（区分音量/非音量） ----------------------
+            volume_cmds = ["volume_up", "volume_down"]  # 音量指令列表
             if current_raw_cmd == self.potential_command:
-                # 检查保持时间是否超过阈值 (0.5秒)
-                if (time.time() - self.stable_start_time) > 0.5:
-                    # 只有当这是新指令（不同于上次触发的）时才触发
-                    if current_raw_cmd != self.last_triggered_cmd:
-                        # 1. 如果是有效指令，则触发
+                # 1. 音量手势：允许连续触发
+                if current_raw_cmd in volume_cmds:
+                    # 稳定0.2秒后，按间隔连续触发
+                    if (time.time() - self.stable_start_time) > 0.8 and \
+                       (time.time() - self.last_volume_trigger) > self.volume_interval:
                         if current_raw_cmd is not None:
                             self.current_command['command'] = current_raw_cmd
                             self.current_command['confidence'] = current_conf
-                            self.last_trigger_time = time.time() # 记录触发时间用于脉冲复位
-                            self.display_command = current_raw_cmd # 更新UI
-                            print(f"触发手势: {current_raw_cmd}, 手指: {current_fingers}")
-                        
-                        # 2. 更新“上次触发指令”（即便是None也要更新，以便下次能重新触发）
-                        self.last_triggered_cmd = current_raw_cmd
+                            self.last_trigger_time = time.time()
+                            self.last_volume_trigger = time.time()  # 更新音量触发时间
+                            self.display_command = current_raw_cmd
+                            print(f"触发音量手势: {current_raw_cmd}, 手指: {current_fingers}")
+                # 2. 非音量手势：保留原有防重复逻辑
+                else:
+                    if (time.time() - self.stable_start_time) > 0.5:
+                        if current_raw_cmd != self.last_triggered_cmd:
+                            if current_raw_cmd is not None:
+                                self.current_command['command'] = current_raw_cmd
+                                self.current_command['confidence'] = current_conf
+                                self.last_trigger_time = time.time()
+                                self.display_command = current_raw_cmd
+                                print(f"触发手势: {current_raw_cmd}, 手指: {current_fingers}")
+                            self.last_triggered_cmd = current_raw_cmd
             else:
-                # 手势发生变化（包括变成了None），重置计时器
+                # 手势变化，重置状态
                 self.potential_command = current_raw_cmd
                 self.stable_start_time = time.time()
+                if current_raw_cmd not in volume_cmds:
+                    self.last_volume_trigger = 0  # 切换非音量手势时重置
 
             # ---------------------- 界面显示 ----------------------
-            # 显示当前是指数量
             cv2.putText(img, f"Fingers: {current_fingers}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-            # 显示当前有效触发的指令（一直显示）
             if self.display_command != "None":
                  cv2.putText(img, f"CMD: {self.display_command}", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
             
-            # 将当前帧编码为 JPEG 并更新到共享缓冲区
+            # 更新共享帧缓冲区
             ret, buffer = cv2.imencode('.jpg', img)
             if ret:
                 frame_buffer.update(buffer.tobytes())
 
-            # 简单的休眠以释放CPU，不再依赖OpenCV窗口的waitKey
             time.sleep(0.01)
                 
         cap.release()
