@@ -34,16 +34,22 @@ class GestureDetector:
         self.stable_start_time = 0       # 潜在指令开始保持的时间
         self.last_triggered_cmd = None   # 上一次成功触发的指令
         self.display_command = "None"    # UI显示的指令
+        self.is_running = False          # 运行控制标志
+
+    def stop(self):
+        """停止检测循环"""
+        self.is_running = False
 
     def run(self):
         """
         核心运行逻辑
         流程：读取摄像头帧 → 检测手部 → 转指令 → 更新全局指令
         """
+        self.is_running = True
         cap = cv2.VideoCapture(0)
-        print("摄像头已启动，按 'q' 键退出...")
+        print("摄像头已启动...")
 
-        while cap.isOpened():
+        while cap.isOpened() and self.is_running:
             success, img = cap.read()
             if not success:
                 print("Ignoring empty camera frame.")
@@ -108,9 +114,8 @@ class GestureDetector:
             if ret:
                 frame_buffer.update(buffer.tobytes())
 
-            # cv2.imshow('Gesture Control', img) # 移除本地显示
-            if cv2.waitKey(5) & 0xFF == ord('q'):
-                break
+            # 简单的休眠以释放CPU，不再依赖OpenCV窗口的waitKey
+            time.sleep(0.01)
                 
         cap.release()
         cv2.destroyAllWindows()
