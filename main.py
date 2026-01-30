@@ -18,40 +18,40 @@ def main():
         from core.musicplay.play import MusicPlayer
         from core.websocket.server import WebSocketServer
         from web.app import run_flask_app
-        print("✅ 所有模块导入成功")
+        print("[INFO] 所有模块导入成功")
     except ImportError as e:
-        print(f"❌ 模块导入失败：{e}")
+        print(f"[ERROR] 模块导入失败：{e}")
         return
     except Exception as e:
-        print(f"❌ 导入模块时发生未知错误：{e}")
+        print(f"[ERROR] 导入模块时发生未知错误：{e}")
         return
 
     # 2. 启动Flask前端（捕获启动错误）
     try:
         flask_thread = threading.Thread(target=run_flask_app, daemon=True)
         flask_thread.start()
-        print("✅ Flask前端：http://127.0.0.1:5000")
+        print("[INFO] Flask前端：http://127.0.0.1:5000")
         time.sleep(2)
     except Exception as e:
-        print(f"❌ Flask启动失败：{e}")
+        print(f"[ERROR] Flask启动失败：{e}")
 
     # 3. 启动WebSocket服务（捕获启动错误）
     try:
         ws_server = WebSocketServer(current_command)
         ws_thread = threading.Thread(target=ws_server.run, daemon=True)
         ws_thread.start()
-        print("✅ WebSocket服务：ws://127.0.0.1:8765")
+        print("[INFO] WebSocket服务：ws://127.0.0.1:8765")
     except Exception as e:
-        print(f"❌ WebSocket启动失败：{e}")
+        print(f"[ERROR] WebSocket启动失败：{e}")
 
     # 4. 启动音乐播放器（捕获启动错误）
     try:
         music_player = MusicPlayer(current_command)
         player_thread = threading.Thread(target=music_player.listen_command, daemon=True)
         player_thread.start()
-        print("✅ 音乐播放器已启动")
+        print("[INFO] 音乐播放器已启动")
     except Exception as e:
-        print(f"❌ 音乐播放器启动失败：{e}")
+        print(f"[ERROR] 音乐播放器启动失败：{e}")
         return
 
     # 5. 启动手势识别（在子线程运行，主线程负责监听退出按键）
@@ -60,25 +60,25 @@ def main():
         detector = GestureDetector(current_command)
         gesture_thread = threading.Thread(target=detector.run, daemon=True)
         gesture_thread.start()
-        print("✅ 手势识别已启动")
+        print("[INFO] 手势识别已启动")
         
         # 主循环：监听按键退出
-        print("\n🚀 服务正常运行中...")
-        print("👉 按 'q' 键或 Ctrl+C 停止所有服务")
+        print("\n[RUNNING] 服务正常运行中...")
+        print("[HINT] 按 'q' 键或 Ctrl+C 停止所有服务")
         
         while True:
             # 检测按键
             if msvcrt.kbhit():
                 key = msvcrt.getch()
                 if key.lower() == b'q':
-                    print("\n🛑 检测到退出指令...")
+                    print("\n[STOP] 检测到退出指令...")
                     break
             time.sleep(0.1)
 
     except Exception as e:
-        print(f"❌ 运行时错误：{e}")
+        print(f"[ERROR] 运行时错误：{e}")
     except KeyboardInterrupt:
-        print("\n⚠️  用户强制终止")
+        print("\n[WARN] 用户强制终止")
     finally:
         if detector:
             detector.stop()
