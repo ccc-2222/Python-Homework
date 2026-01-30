@@ -89,7 +89,7 @@ class MusicPlayer:
         last_command = "idle"
         # 新增：记录音量指令的最后处理时间，防止高频重复
         last_volume_process = 0
-        volume_process_interval = 0.15  # 音量处理间隔（与检测器匹配）
+        volume_process_interval = 0.5  # 音量处理间隔（与检测器匹配）
 
         while True:
             current_cmd = self.shared_command.get("command", "idle")
@@ -97,14 +97,14 @@ class MusicPlayer:
 
             # 音量指令：允许连续处理（跳过last_command判断）
             if current_cmd in ["volume_up", "volume_down"]:
-                if confidence > 0.6 and (time.time() - last_volume_process) > volume_process_interval:
+                if confidence > 0.8 and (time.time() - last_volume_process) > volume_process_interval:
                     last_volume_process = time.time()
                     if current_cmd == "volume_up":
                         self._adjust_volume("up")
                     elif current_cmd == "volume_down":
                         self._adjust_volume("down")
             # 非音量指令：保留原有防重复逻辑
-            elif confidence > 0.6 and current_cmd != last_command:
+            elif confidence > 0.8 and current_cmd != last_command:
                 last_command = current_cmd
                 if current_cmd == "play" and not self.is_playing:
                     self._play_current_music()
