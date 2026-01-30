@@ -26,12 +26,6 @@ h1 {
     text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
 }
 
-h2 {
-    color: white;
-    margin-bottom: 15px;
-    font-size: 1.5em;
-}
-
 /* 状态区域 */
 .status-section {
     background: rgba(255, 255, 255, 0.1);
@@ -195,10 +189,70 @@ h2 {
     margin-bottom: 8px;
 }
 
+.gesture-icon svg {
+    width: 48px;
+    height: 48px;
+    fill: #fff;
+}
+
 .gesture-desc {
     color: white;
     font-size: 14px;
     font-weight: bold;
+}
+
+/* 标记当前播放的音乐 */
+.playing {
+    color: green;
+    font-weight: bold;
+    background-color: green;
+    color: white; /* 确保文字颜色可读 */
+}
+
+/* 视频显示区域 */
+.video-section {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: center;
+}
+
+.video-container {
+    width: 100%;
+    max-width: 640px;
+    margin: 0 auto;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.video-container img {
+    width: 100%;
+    display: block;
+}
+
+/* 图标样式 */
+.icon {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+    vertical-align: middle;
+}
+
+.btn .icon {
+    margin-right: 8px;
+    width: 20px;
+    height: 20px;
+}
+
+h1 .icon {
+    width: 36px;
+    height: 36px;
+    margin-right: 10px;
+    fill: white;
 }
 
 /* 响应式设计 */

@@ -1,4 +1,3 @@
-
 """
 手势检测核心（实现Mediapipe摄像头检测+手势转指令）
 """
@@ -6,6 +5,7 @@ import cv2
 import mediapipe as mp
 import time
 from core.gesture.signal import convert_gesture_to_command  # 手势转指令
+from core.utils.shared_frame import frame_buffer # 引入共享帧缓冲区
 
 
 class GestureDetector:
@@ -28,22 +28,31 @@ class GestureDetector:
         
         # 冷却控制
         self.last_trigger_time = 0
+        # 新增：音量手势专属冷却（控制连续触发间隔）
+        self.last_volume_trigger = 0
+        self.volume_interval = 0.2  # 音量连续触发间隔（200ms）
         
         # 状态防抖相关
         self.potential_command = None    # 当前正在检测但未确认的指令
         self.stable_start_time = 0       # 潜在指令开始保持的时间
         self.last_triggered_cmd = None   # 上一次成功触发的指令
         self.display_command = "None"    # UI显示的指令
+        self.is_running = False          # 运行控制标志
+
+    def stop(self):
+        """停止检测循环"""
+        self.is_running = False
 
     def run(self):
         """
         核心运行逻辑
         流程：读取摄像头帧 → 检测手部 → 转指令 → 更新全局指令
         """
+        self.is_running = True
         cap = cv2.VideoCapture(0)
-        print("摄像头已启动，按 'q' 键退出...")
+        print("摄像头已启动...")
 
-        while cap.isOpened():
+        while cap.isOpened() and self.is_running:
             success, img = cap.read()
             if not success:
                 print("Ignoring empty camera frame.")
@@ -57,8 +66,6 @@ class GestureDetector:
             results = self.hands.process(img_rgb)
             
             # 自动重置指令为idle（脉冲复位逻辑）
-            # 只有当置信度不为1.0（非人工/Web端指令）时，才由此处重置
-            # Web端指令由WebSocket Server自行管理复位
             if self.current_command['confidence'] != 1.0:
                 if self.current_command['command'] != 'idle' and (time.time() - self.last_trigger_time > 0.2):
                     self.current_command['command'] = 'idle'
@@ -74,38 +81,50 @@ class GestureDetector:
                     self.mp_draw.draw_landmarks(img, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
                     current_raw_cmd, current_conf, current_fingers = convert_gesture_to_command(hand_landmarks)
             
-            # ---------------------- 防抖逻辑 ----------------------
-            # 如果当前检测到的原始指令与“潜在指令”一致
+            # ---------------------- 防抖逻辑（区分音量/非音量） ----------------------
+            volume_cmds = ["volume_up", "volume_down"]  # 音量指令列表
             if current_raw_cmd == self.potential_command:
-                # 检查保持时间是否超过阈值 (0.5秒)
-                if (time.time() - self.stable_start_time) > 0.5:
-                    # 只有当这是新指令（不同于上次触发的）时才触发
-                    if current_raw_cmd != self.last_triggered_cmd:
-                        # 1. 如果是有效指令，则触发
+                # 1. 音量手势：允许连续触发
+                if current_raw_cmd in volume_cmds:
+                    # 稳定0.2秒后，按间隔连续触发
+                    if (time.time() - self.stable_start_time) > 0.8 and \
+                       (time.time() - self.last_volume_trigger) > self.volume_interval:
                         if current_raw_cmd is not None:
                             self.current_command['command'] = current_raw_cmd
                             self.current_command['confidence'] = current_conf
-                            self.last_trigger_time = time.time() # 记录触发时间用于脉冲复位
-                            self.display_command = current_raw_cmd # 更新UI
-                            print(f"触发手势: {current_raw_cmd}, 手指: {current_fingers}")
-                        
-                        # 2. 更新“上次触发指令”（即便是None也要更新，以便下次能重新触发）
-                        self.last_triggered_cmd = current_raw_cmd
+                            self.last_trigger_time = time.time()
+                            self.last_volume_trigger = time.time()  # 更新音量触发时间
+                            self.display_command = current_raw_cmd
+                            print(f"触发音量手势: {current_raw_cmd}, 手指: {current_fingers}")
+                # 2. 非音量手势：保留原有防重复逻辑
+                else:
+                    if (time.time() - self.stable_start_time) > 0.5:
+                        if current_raw_cmd != self.last_triggered_cmd:
+                            if current_raw_cmd is not None:
+                                self.current_command['command'] = current_raw_cmd
+                                self.current_command['confidence'] = current_conf
+                                self.last_trigger_time = time.time()
+                                self.display_command = current_raw_cmd
+                                print(f"触发手势: {current_raw_cmd}, 手指: {current_fingers}")
+                            self.last_triggered_cmd = current_raw_cmd
             else:
-                # 手势发生变化（包括变成了None），重置计时器
+                # 手势变化，重置状态
                 self.potential_command = current_raw_cmd
                 self.stable_start_time = time.time()
+                if current_raw_cmd not in volume_cmds:
+                    self.last_volume_trigger = 0  # 切换非音量手势时重置
 
             # ---------------------- 界面显示 ----------------------
-            # 显示当前是指数量
             cv2.putText(img, f"Fingers: {current_fingers}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-            # 显示当前有效触发的指令（一直显示）
             if self.display_command != "None":
                  cv2.putText(img, f"CMD: {self.display_command}", (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
             
-            cv2.imshow('Gesture Control', img)
-            if cv2.waitKey(5) & 0xFF == ord('q'):
-                break
+            # 更新共享帧缓冲区
+            ret, buffer = cv2.imencode('.jpg', img)
+            if ret:
+                frame_buffer.update(buffer.tobytes())
+
+            time.sleep(0.01)
                 
         cap.release()
         cv2.destroyAllWindows()

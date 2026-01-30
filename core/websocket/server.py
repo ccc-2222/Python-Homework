@@ -15,7 +15,10 @@ class WebSocketServer:
         """持续发送当前状态给前端"""
         while True:
             try:
-                await websocket.send(json.dumps(self.current_command))
+                # 添加当前播放音乐信息
+                state = self.current_command.copy()
+                state['current_music'] = self.current_command.get('current_music', None)
+                await websocket.send(json.dumps(state))
                 await asyncio.sleep(0.2)  # 提高刷新率到0.2秒
             except websockets.exceptions.ConnectionClosed:
                 break
@@ -27,7 +30,7 @@ class WebSocketServer:
                 try:
                     data = json.loads(message)
                     if "command" in data:
-                        print(f"📡 收到前端指令: {data['command']}")
+                        print(f"[RECV] 收到前端指令: {data['command']}")
                         # 1. 设置指令
                         self.current_command['command'] = data['command']
                         self.current_command['confidence'] = 1.0
@@ -42,13 +45,13 @@ class WebSocketServer:
                             self.current_command['confidence'] = 0.0
 
                 except json.JSONDecodeError:
-                    print("❌ 收到无效JSON数据")
+                    print("[ERROR] 收到无效JSON数据")
         except websockets.exceptions.ConnectionClosed:
             pass
 
     async def handle_client(self, websocket):
         """处理前端客户端连接（双向通信）"""
-        print(f"✅ 前端已连接：{websocket.remote_address}")
+        print(f"[INFO] 前端已连接：{websocket.remote_address}")
 
         # 并发执行发送状态和接收指令
         producer = asyncio.create_task(self._send_state(websocket))
@@ -64,7 +67,7 @@ class WebSocketServer:
         for task in pending:
             task.cancel()
 
-        print(f"❌ 前端断开连接：{websocket.remote_address}")
+        print(f"[WARN] 前端断开连接：{websocket.remote_address}")
 
     async def start_server_async(self):
         async with websockets.serve(self.handle_client, self.host, self.port):
