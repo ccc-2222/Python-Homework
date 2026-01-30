@@ -117,4 +117,4 @@ class MusicPlayer:
                 elif current_cmd == "prev":
                     self._prev_music()
             
-            time.sleep(0.25)  # 降低休眠时间，提升响应速度
+            time.sleep(0.24)  # 降低休眠时间，提升响应速度
