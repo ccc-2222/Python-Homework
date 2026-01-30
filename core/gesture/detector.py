@@ -30,7 +30,7 @@ class GestureDetector:
         self.last_trigger_time = 0
         # 新增：音量手势专属冷却（控制连续触发间隔）
         self.last_volume_trigger = 0
-        self.volume_interval = 0.2  # 音量连续触发间隔（200ms）
+        self.volume_interval = 0.5  # 音量连续触发间隔（200ms）
         
         # 状态防抖相关
         self.potential_command = None    # 当前正在检测但未确认的指令
