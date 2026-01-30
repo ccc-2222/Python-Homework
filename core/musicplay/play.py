@@ -117,4 +117,8 @@ class MusicPlayer:
                 elif current_cmd == "prev":
                     self._prev_music()
             
-            time.sleep(0.24)  # 降低休眠时间，提升响应速度
+            # 如果指令恢复空闲，重置last_command，以便允许下一次相同的指令（如连续下一首）
+            if current_cmd == "idle":
+                last_command = "idle"
+            
+            time.sleep(0.1)  # 提高轮询频率，防止漏掉短时的指令脉冲
