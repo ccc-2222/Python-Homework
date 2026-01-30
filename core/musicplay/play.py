@@ -97,14 +97,14 @@ class MusicPlayer:
 
             # 音量指令：允许连续处理（跳过last_command判断）
             if current_cmd in ["volume_up", "volume_down"]:
-                if confidence > 0.8 and (time.time() - last_volume_process) > volume_process_interval:
+                if confidence > 0.6 and (time.time() - last_volume_process) > volume_process_interval:
                     last_volume_process = time.time()
                     if current_cmd == "volume_up":
                         self._adjust_volume("up")
                     elif current_cmd == "volume_down":
                         self._adjust_volume("down")
             # 非音量指令：保留原有防重复逻辑
-            elif confidence > 0.8 and current_cmd != last_command:
+            elif confidence > 0.6 and current_cmd != last_command:
                 last_command = current_cmd
                 if current_cmd == "play" and not self.is_playing:
                     self._play_current_music()
@@ -117,4 +117,4 @@ class MusicPlayer:
                 elif current_cmd == "prev":
                     self._prev_music()
             
-            time.sleep(0.05)  # 降低休眠时间，提升响应速度
+            time.sleep(0.25)  # 降低休眠时间，提升响应速度
