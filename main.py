@@ -4,6 +4,7 @@
 import threading
 import time
 import sys
+import os  # 添加 os 用于强制退出
 import msvcrt  # 用于Windows下的按键检测
 
 print(f"当前Python路径：{sys.path}")
@@ -85,7 +86,8 @@ def main():
         print("=== 程序已关闭，正在清理资源... ===")
         # 给一点时间让子线程清理
         time.sleep(1)
-        sys.exit(0)
+        print("👋 Bye!")
+        os._exit(0)  # 强制终止所有线程和进程
 
 if __name__ == "__main__":
     main()
